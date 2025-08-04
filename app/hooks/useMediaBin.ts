@@ -136,6 +136,48 @@ const getMediaMetadata = (file: File, mediaType: "video" | "image" | "audio"): P
   });
 };
 
+const generateSpectrogram = (file: File): Promise<number[][]> => {
+  return new Promise((resolve, reject) => {
+    const fileReader = new FileReader();
+    fileReader.readAsArrayBuffer(file);
+    fileReader.onload = async () => {
+      const arrayBuffer = fileReader.result as ArrayBuffer;
+      const audioContext = new OfflineAudioContext(1, arrayBuffer.byteLength, 44100);
+      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+      const source = audioContext.createBufferSource();
+      source.buffer = audioBuffer;
+
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 256;
+      const bufferLength = analyser.frequencyBinCount;
+
+      // Using ScriptProcessorNode as it's simpler for offline contexts, though deprecated.
+      const scriptProcessor = audioContext.createScriptProcessor(1024, 1, 1);
+
+      const spectrogramData: number[][] = [];
+
+      scriptProcessor.onaudioprocess = () => {
+        const dataArray = new Uint8Array(bufferLength);
+        analyser.getByteFrequencyData(dataArray);
+        spectrogramData.push(Array.from(dataArray));
+      };
+
+      source.connect(analyser);
+      analyser.connect(scriptProcessor);
+      scriptProcessor.connect(audioContext.destination);
+
+      source.start();
+
+      audioContext.startRendering().then(() => {
+        resolve(spectrogramData);
+      }).catch(reject);
+    };
+    fileReader.onerror = reject;
+  });
+};
+
+
 export const useMediaBin = (handleDeleteScrubbersByMediaBinId: (mediaBinId: string) => void) => {
   const [mediaBinItems, setMediaBinItems] = useState<MediaBinItem[]>([])
   const [contextMenu, setContextMenu] = useState<{
@@ -208,6 +250,17 @@ export const useMediaBin = (handleDeleteScrubbersByMediaBinId: (mediaBinId: stri
       const metadata = await getMediaMetadata(file, mediaType);
       console.log("Media metadata:", metadata);
 
+      let spectrogramData: number[][] | null = null;
+      if (mediaType === 'audio') {
+        try {
+          console.log("Generating spectrogram...");
+          spectrogramData = await generateSpectrogram(file);
+          console.log("Spectrogram generated.");
+        } catch (e) {
+          console.error("Failed to generate spectrogram", e);
+        }
+      }
+
       // Add item to media bin immediately with upload progress tracking
       const newItem: MediaBinItem = {
         id,
@@ -223,6 +276,7 @@ export const useMediaBin = (handleDeleteScrubbersByMediaBinId: (mediaBinId: stri
         uploadProgress: 0,
         left_transition_id: null,
         right_transition_id: null,
+        spectrogramData,
       };
       setMediaBinItems(prev => [...prev, newItem]);
 
