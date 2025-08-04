@@ -3,6 +3,7 @@ import { Trash2 } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { ScrollArea } from "~/components/ui/scroll-area";
 import { Scrubber } from "./Scrubber";
+import { TimeSeriesTrack } from "./TimeSeriesTrack";
 import { TransitionOverlay } from "./TransitionOverlay";
 import {
   DEFAULT_TRACK_HEIGHT,
@@ -263,8 +264,24 @@ export const TimelineTracks: React.FC<TimelineTracksProps> = ({
                 </div>
               ))}
 
-              {/* Scrubbers */}
+              {/* Scrubbers and TimeSeries Tracks */}
               {getAllScrubbers().map((scrubber) => {
+                if (scrubber.mediaType === 'timeseries') {
+                  return (
+                    <TimeSeriesTrack
+                      key={scrubber.id}
+                      scrubber={scrubber}
+                      timelineWidth={timelineWidth}
+                      onUpdate={onUpdateScrubber}
+                      containerRef={containerRef}
+                      pixelsPerSecond={pixelsPerSecond}
+                      isSelected={selectedScrubberId === scrubber.id}
+                      onSelect={onSelectScrubber}
+                      trackCount={timeline.tracks.length}
+                    />
+                  );
+                }
+
                 // Get all transitions for the track containing this scrubber
                 const scrubberTrack = timeline.tracks.find(track =>
                   track.scrubbers.some(s => s.id === scrubber.id)

@@ -1,6 +1,6 @@
 import { useOutletContext } from "react-router";
 import { useMemo, memo } from "react";
-import { FileVideo, FileImage, Type, Clock, Upload, Music, Trash2, SplitSquareHorizontal } from "lucide-react";
+import { FileVideo, FileImage, Type, Clock, Upload, Music, Trash2, SplitSquareHorizontal, LineChart } from "lucide-react";
 import { Thumbnail } from '@remotion/player';
 import { OffthreadVideo, Img, Video } from 'remotion';
 import { type MediaBinItem } from "./types";
@@ -145,6 +145,13 @@ export default function MediaBin() {
           </div>
         );
       
+      case "timeseries":
+        return (
+          <div className="w-12 h-8 rounded border border-border/50 bg-card flex items-center justify-center">
+            <LineChart className="h-4 w-4 text-muted-foreground" />
+          </div>
+        );
+
       default:
         return <FileImage className="h-8 w-8 text-muted-foreground" />;
     }

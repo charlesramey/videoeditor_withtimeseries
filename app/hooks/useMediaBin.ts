@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react"
 import axios from "axios"
+import Papa from "papaparse"
 import { type MediaBinItem } from "~/components/timeline/types"
 import { generateUUID } from "~/utils/uuid"
 import { apiUrl } from "~/utils/api"
@@ -146,12 +147,55 @@ export const useMediaBin = (handleDeleteScrubbersByMediaBinId: (mediaBinId: stri
   const handleAddMediaToBin = useCallback(async (file: File) => {
     const id = generateUUID();
     const name = file.name;
+
+    if (file.name.endsWith(".csv")) {
+      return new Promise<void>((resolve, reject) => {
+        Papa.parse(file, {
+          header: false,
+          dynamicTyping: true,
+          complete: (results) => {
+            const data = results.data as [number, number][];
+            const timeSeriesData = data.filter(row => row && row.length >= 2 && typeof row[0] === 'number' && typeof row[1] === 'number').map(row => ({ time: row[0], value: row[1] }));
+
+            if (timeSeriesData.length === 0) {
+              return reject(new Error("CSV file is empty or has an invalid format."));
+            }
+
+            const durationInSeconds = timeSeriesData[timeSeriesData.length - 1].time / 1000;
+
+            const newItem: MediaBinItem = {
+              id,
+              name,
+              mediaType: "timeseries",
+              mediaUrlLocal: null,
+              mediaUrlRemote: null,
+              durationInSeconds: durationInSeconds,
+              media_width: 0,
+              media_height: 0,
+              text: null,
+              isUploading: false,
+              uploadProgress: null,
+              timeSeriesData,
+              left_transition_id: null,
+              right_transition_id: null,
+            };
+            setMediaBinItems(prev => [...prev, newItem]);
+            resolve();
+          },
+          error: (error) => {
+            console.error("Error parsing CSV:", error);
+            reject(error);
+          }
+        });
+      });
+    }
+
     let mediaType: "video" | "image" | "audio";
     if (file.type.startsWith("video/")) mediaType = "video";
     else if (file.type.startsWith("image/")) mediaType = "image";
     else if (file.type.startsWith("audio/")) mediaType = "audio";
     else {
-      alert("Unsupported file type. Please select a video or image.");
+      alert("Unsupported file type. Please select a video, image, audio, or CSV file.");
       return;
     }
 

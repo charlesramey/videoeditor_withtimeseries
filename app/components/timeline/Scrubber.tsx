@@ -290,6 +290,7 @@ export const Scrubber: React.FC<ScrubberProps> = ({
       video: "bg-primary border-primary/60 text-primary-foreground",
       image: "bg-green-600 border-green-500 text-white",
       text: "bg-purple-600 border-purple-500 text-white",
+      timeseries: "bg-teal-600 border-teal-500 text-white",
       default: "bg-primary border-primary/60 text-primary-foreground",
       audio: "bg-blue-600 border-blue-400 text-white",
     };
@@ -300,6 +301,7 @@ export const Scrubber: React.FC<ScrubberProps> = ({
       image:
         "bg-green-600 border-green-400 text-white ring-2 ring-green-400/50",
       text: "bg-purple-600 border-purple-400 text-white ring-2 ring-purple-400/50",
+      timeseries: "bg-teal-600 border-teal-400 text-white ring-2 ring-teal-400/50",
       audio:
         "bg-blue-600 border-blue-400 text-white ring-2 ring-blue-400/50",
       default:

@@ -804,7 +804,7 @@ export default function TimelineEditor() {
       <input
         ref={fileInputRef}
         type="file"
-        accept="video/*,image/*,audio/*"
+        accept="video/*,image/*,audio/*,.csv"
         multiple
         className="hidden"
         onChange={handleFileInputChange}
